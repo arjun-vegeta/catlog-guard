@@ -1,6 +1,7 @@
 # Catalog Defect & Compliance Guardian (catalog-guard)
 
-> **Tech Stack:** Python 3.11 | XGBoost | Scikit-Learn | Gemini 3.1 Flash Lite | FastAPI | Streamlit | SQLite | SQL
+> **Tech Stack:** Python 3.11 | XGBoost | Scikit-Learn | Gemini 3.1 Flash Lite | FastAPI | Streamlit | SQLite | SQL  
+> **Live Dashboard:** [https://catlog-guard.streamlit.app/](https://catlog-guard.streamlit.app/)
 
 ---
 
