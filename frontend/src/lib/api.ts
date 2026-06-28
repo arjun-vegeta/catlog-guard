@@ -284,20 +284,27 @@ export const INITIAL_AUDIT_LOGS: AuditRecord[] = [
 
 export async function checkBackendHealth(
   customBaseUrl?: string,
+  timeoutMs: number = 8000,
 ): Promise<HealthResponse | null> {
   const url = `${customBaseUrl || API_BASE_URL}/health`;
   try {
     const res = await fetch(url, {
       cache: "no-store",
-      signal: AbortSignal.timeout(3000),
+      signal: AbortSignal.timeout(timeoutMs),
     });
     if (res.ok) {
       return await res.json();
     }
   } catch {
-    console.warn(`Backend health check failed at ${url}`);
+    // Silence warning while Render container spins up
   }
   return null;
+}
+
+export function pingBackendWakeup(customBaseUrl?: string): void {
+  const baseUrl = customBaseUrl || API_BASE_URL;
+  fetch(`${baseUrl}/health`, { cache: "no-store" }).catch(() => {});
+  fetch(`${baseUrl}/`, { cache: "no-store" }).catch(() => {});
 }
 
 export async function checkListing(

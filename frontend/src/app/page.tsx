@@ -16,6 +16,7 @@ import { API_BASE_URL } from "../lib/config";
 import {
   INITIAL_AUDIT_LOGS,
   checkBackendHealth,
+  pingBackendWakeup,
   calculateMetrics,
 } from "../lib/api";
 
@@ -24,6 +25,7 @@ export default function Home() {
     "analytics" | "auditor" | "tradeoff"
   >("analytics");
   const [health, setHealth] = useState<HealthResponse | null>(null);
+  const [isWakingUp, setIsWakingUp] = useState<boolean>(true);
   const [auditLogs, setAuditLogs] = useState<AuditRecord[]>(INITIAL_AUDIT_LOGS);
   const [selectedRecord, setSelectedRecord] = useState<AuditRecord | null>(
     null,
@@ -31,15 +33,42 @@ export default function Home() {
 
   useEffect(() => {
     let isMounted = true;
-    const fetchHealth = async () => {
-      const res = await checkBackendHealth(API_BASE_URL);
-      if (isMounted) setHealth(res);
+    let attempts = 0;
+    let timerId: NodeJS.Timeout;
+
+    // Immediately send wakeup HTTP requests to wake up Render container
+    pingBackendWakeup(API_BASE_URL);
+
+    const pollHealth = async () => {
+      attempts++;
+      const res = await checkBackendHealth(API_BASE_URL, 6000);
+
+      if (!isMounted) return;
+
+      if (res && res.status === "healthy") {
+        setHealth(res);
+        setIsWakingUp(false);
+        // Once healthy, poll at normal 15s interval
+        timerId = setTimeout(pollHealth, 15000);
+      } else {
+        // If still waking up, poll rapidly every 3.5s for up to 30 attempts (~100s)
+        if (attempts < 30) {
+          setIsWakingUp(true);
+          timerId = setTimeout(pollHealth, 3500);
+        } else {
+          // Timeout cold-start window, revert to Local Mode
+          setIsWakingUp(false);
+          setHealth(null);
+          timerId = setTimeout(pollHealth, 15000);
+        }
+      }
     };
-    fetchHealth();
-    const interval = setInterval(fetchHealth, 15000);
+
+    pollHealth();
+
     return () => {
       isMounted = false;
-      clearInterval(interval);
+      if (timerId) clearTimeout(timerId);
     };
   }, []);
 
@@ -77,6 +106,7 @@ export default function Home() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         health={health}
+        isWakingUp={isWakingUp}
       />
 
       {/* Main Content */}
