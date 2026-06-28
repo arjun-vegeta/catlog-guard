@@ -5,3 +5,5 @@ __pycache__/
 .streamlit/
 .env
 project-1-catalog-defect-guardian.md
+*.db
+dashboard/logs.db
