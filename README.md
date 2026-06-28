@@ -1,7 +1,8 @@
 # Catalog Defect & Compliance Guardian (catalog-guard)
 
-> **Tech Stack:** Python 3.11 | XGBoost | Scikit-Learn | Gemini 3.1 Flash Lite | FastAPI | Streamlit | SQLite | SQL  
-> **Live Dashboard:** [https://catlog-guard.streamlit.app/](https://catlog-guard.streamlit.app/)
+> **Tech Stack:** Python 3.11 | XGBoost | Scikit-Learn | Gemini 3.1 Flash Lite | FastAPI | Next.js 16 | Tailwind CSS | Streamlit | SQLite  
+> **Live Ops Dashboard (Vercel):** [https://catlog-guard.vercel.app/](https://catlog-guard.vercel.app/)  
+> **Live Streamlit Dashboard:** [https://catlog-guard.streamlit.app/](https://catlog-guard.streamlit.app/)
 
 ---
 
@@ -42,20 +43,15 @@ The system achieves **0.9116 F1-score** on defect detection and predicts a conti
                                                                        │
                                                ┌───────────────────────┘
                                                ▼
-                               ┌──────────────────────────────┐
-                               │   FastAPI /check-listing     │
-                               └───────────────┬──────────────┘
-                                               │
-                                               ▼
-                               ┌──────────────────────────────┐
-                               │   SQLite `audit_logs` DB     │
-                               └───────────────┬──────────────┘
-                                               │
-                                               ▼
-                               ┌──────────────────────────────┐
-                               │  Streamlit Audit Dashboard   │
-                               │  (SQL KPI Aggregations)      │
-                               └───────────────┬──────────────┘
+                                ┌──────────────────────────────┐
+                                │   FastAPI /check-listing     │
+                                └───────────────┬──────────────┘
+                                                │
+                                                ▼
+                               ┌────────────────────────────────┐
+                               │  Vercel / Streamlit Dashboards │
+                               │  (Live Feed & ROI Analytics)   │
+                               └────────────────────────────────┘
 ```
 
 ---
@@ -77,8 +73,14 @@ The system achieves **0.9116 F1-score** on defect detection and predicts a conti
 
 ```
 catalog-guard/
-├── README.md                  # System architecture, performance, and pitch
-├── requirements.txt           # Production dependencies
+├── README.md                  # System architecture, performance, and live links
+├── requirements.txt           # Production Python dependencies
+├── Procfile                   # Web service deployment specification
+├── render.yaml                # Render deployment specification
+├── frontend/                  # Next.js 16 + Tailwind CSS Pitch-Black Ops Dashboard
+│   ├── src/app/               # App router pages & layouts
+│   ├── src/components/        # Operations, Live Inspector, and ROI components
+│   └── vercel.json            # Vercel build specification
 ├── data/
 │   ├── prepare_dataset.py     # Data parsing & synthetic defect injection script
 │   ├── dataset.csv            # Full 6,000-row dataset
@@ -100,7 +102,6 @@ catalog-guard/
 │   └── main.py                # FastAPI audit endpoint with SQLite logging
 └── dashboard/
     ├── app.py                 # Streamlit monitoring dashboard
-    ├── logs.db                # SQLite request log database
     └── queries.sql            # SQL queries for dashboard aggregations
 ```
 
@@ -111,7 +112,7 @@ catalog-guard/
 ### 1. Installation & Environment Setup
 
 ```bash
-git clone https://github.com/your-username/catalog-guard.git
+git clone https://github.com/arjun-vegeta/catlog-guard.git
 cd catalog-guard
 python3 -m venv venv
 source venv/bin/activate
@@ -140,36 +141,21 @@ uvicorn api.main:app --reload --port 8000
 - Open Swagger API Docs: `http://localhost:8000/docs`
 - Test endpoint: `POST http://localhost:8000/check-listing`
 
-### 4. Launch Streamlit Monitoring Dashboard
+### 4. Run Next.js Ops Dashboard (Vercel UI)
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+- Open Next.js Dashboard: `http://localhost:3000`
+
+### 5. Launch Streamlit Monitoring Dashboard
 
 ```bash
 streamlit run dashboard/app.py
 ```
 - View live analytics, run real-time listing audits, inspect SQL queries, and view the ML-vs-GenAI trade-off paper.
-
----
-
-## SQL-Backed Analytics
-
-All audit requests and predictions are logged to a local **SQLite** database (`dashboard/logs.db`). Dashboard aggregations are computed using raw SQL queries stored in [`dashboard/queries.sql`](file:///Users/arjun/Desktop/catalog-guard/dashboard/queries.sql):
-
-```sql
--- Defect Type Breakdown Query
-SELECT 
-    defect_type,
-    COUNT(*) as count,
-    ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM audit_logs), 2) as percentage
-FROM audit_logs
-GROUP BY defect_type
-ORDER BY count DESC;
-```
-
----
-
-## Key Artifacts
-
-- **[Trade-off Evaluation Document](file:///Users/arjun/Desktop/catalog-guard/eval/tradeoff_analysis.md):** Detailed analysis on cost, latency, accuracy, and explainability trade-offs between Classical ML and GenAI LLMs.
-- **[Experiment Log](file:///Users/arjun/Desktop/catalog-guard/eval/experiment_log.md):** Iterative experimentation metrics (baseline vs tuned XGBoost, precision/recall trade-offs, regressor RMSE).
 
 ---
 
